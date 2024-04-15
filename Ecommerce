@@ -1,0 +1,64 @@
+#Mini project: E commerce API
+
+from flask import Flask, jsonify, request
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://emcmillan1:Aurora1952$@localhost/e_commerce_db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+# Define Customer Model
+class Customer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+
+# Define Product Model
+class Product(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    price = db.Column(db.Float, nullable=False)
+
+# Routes for Customer Management
+@app.route('/customers', methods=['POST'])
+def create_customer():
+    data = request.get_json()
+    new_customer = Customer(name=data['name'], email=data['email'], phone=data['phone'])
+    db.session.add(new_customer)
+    db.session.commit()
+    return jsonify({'message': 'Customer created successfully'}), 201
+
+@app.route('/customers/<int:id>', methods=['GET'])
+def get_customer(id):
+    customer = Customer.query.get_or_404(id)
+    return jsonify({
+        'id': customer.id,
+        'name': customer.name,
+        'email': customer.email,
+        'phone': customer.phone
+    })
+
+@app.route('/customers/<int:id>', methods=['PUT'])
+def update_customer(id):
+    customer = Customer.query.get_or_404(id)
+    data = request.get_json()
+    customer.name = data['name']
+    customer.email = data['email']
+    customer.phone = data['phone']
+    db.session.commit()
+    return jsonify({'message': 'Customer updated successfully'})
+
+@app.route('/customers/<int:id>', methods=['DELETE'])
+def delete_customer(id):
+    customer = Customer.query.get_or_404(id)
+    db.session.delete(customer)
+    db.session.commit()
+    return jsonify({'message': 'Customer deleted successfully'})
+
+# Routes for Product Management
+# Implement similar CRUD endpoints for managing products
+
+if __name__ == '__main__':
+    app.run(debug=True)
